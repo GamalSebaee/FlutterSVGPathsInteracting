@@ -1,16 +1,15 @@
 import 'package:click/parser/parser.dart';
 import 'package:flutter/material.dart';
 import 'package:touchable/touchable.dart';
-
-import 'paints/path_painter.dart';
+import 'SelectedPathModel.dart';
 import 'paints/path_painter2.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp( MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key key}) : super(key: key);
+  const MyApp({Key? key}) : super(key: key);
 
   // This widget is the root of your application.
   @override
@@ -21,13 +20,13 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const MyHomePage(),
+      home:  MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key key}) : super(key: key);
+  const MyHomePage({Key? key}) : super(key: key);
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
@@ -37,9 +36,18 @@ class _MyHomePageState extends State<MyHomePage> {
   final svgPath = "images/item.svg";
   List<Path> paths = [];
   List<PathSegment> pathsSegment = [];
-  PathSegment _selectedPath;
-  double heightSvg;
-  double widthSvg;
+  List<SelectedPathModel> _selectedPaths=[
+    SelectedPathModel(
+      pathName:'tooth-37-parent',
+      pathColor: Colors.red
+    ), SelectedPathModel(
+      pathName:'tooth-47-parent',
+        pathColor: Colors.yellow
+    )
+
+  ];
+  double? heightSvg;
+  double? widthSvg;
   SvgParser parser = SvgParser();
   @override
   void initState() {
@@ -60,15 +68,19 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: CanvasTouchDetector(
+              gesturesToOverride: const [
+                GestureType.onTapDown
+              ],
               builder: (context) => CustomPaint(
                 painter: PathPainter2(
                   context: context,
                   paths: pathsSegment,
-                  curPath: _selectedPath,
+                  curPath: _selectedPaths,
                   onPressed: (curPath) {
-                    print("itemSegment ${curPath?.pathId}");
+                    print("itemSegment ${curPath.pathId}");
                     setState(() {
-                      _selectedPath = curPath;
+                      _selectedPaths.add(SelectedPathModel(pathName: curPath.pathId,
+                      pathColor: Colors.blue));
                     });
                   },
                   height: 700,

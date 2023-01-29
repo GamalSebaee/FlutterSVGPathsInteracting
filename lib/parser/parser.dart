@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_parsing/path_parsing.dart';
 import 'package:xml/xml.dart' as xml;
+import 'package:xml/xml.dart';
+import 'package:xml/xml_events.dart';
 //SVG parsing
 
 /// Parses a minimal subset of a SVG file and extracts all paths segments.
@@ -13,7 +15,7 @@ class SvgParser {
 
   Color parseColor(String cStr) {
     if (cStr == null || cStr.isEmpty) {
-      throw UnsupportedError("Empty color field found.");
+      return Colors.black;
     }
     if (cStr[0] == '#') {
       return Color(int.parse(cStr.substring(1), radix: 16)).withOpacity(
@@ -27,7 +29,8 @@ class SvgParser {
   }
 
   //Extract segments of each path and create [PathSegment] representation
-  void addPathSegments(Path path, int index, double strokeWidth, Color color,dynamic pathId) {
+  void addPathSegments(
+      Path path, int index, double? strokeWidth, Color? color, dynamic pathId) {
     int firstPathSegmentIndex = _pathSegments.length;
     int relativeIndex = 0;
     path.computeMetrics().forEach((pp) {
@@ -42,28 +45,44 @@ class SvgParser {
 
       if (strokeWidth != null) segment.strokeWidth = strokeWidth;
 
-      segment.pathId=pathId;
+      segment.pathId = pathId;
       _pathSegments.add(segment);
       relativeIndex++;
     });
   }
 
-  double width;
-  double height;
-  String viewbox;
+  double? width;
+  double? height;
+  String? viewbox;
 
   double get svgWidth {
     if (width != null) {
-      return width;
+      return width!;
     }
-    return double.tryParse(viewbox.split(" ")[2]);
+    try {
+      if (viewbox != null) {
+        return double.tryParse(viewbox!.split(" ")[2]) ?? 0.0;
+      } else {
+        return 0.0;
+      }
+    } catch (e) {
+      return 0.0;
+    }
   }
 
   double get svgHeight {
     if (height != null) {
-      return height;
+      return height!;
     }
-    return double.tryParse(viewbox.split(" ")[3]);
+    try {
+      if (viewbox != null) {
+        return double.tryParse(viewbox!.split(" ")[3]) ?? 0.0;
+      } else {
+        return 0.0;
+      }
+    } catch (e) {
+      return 0.0;
+    }
   }
 
   void loadFromString(String svgString) {
@@ -73,13 +92,24 @@ class SvgParser {
 
     doc.findElements("svg").map((e) => e.attributes).forEach((node) {
       var someH = node.firstWhere((attr) => attr.name.local == "height",
-          orElse: () => null);
+          orElse: () => XmlAttribute(
+              XmlName(''),
+              ''
+          ));
       height = double.tryParse(someH.value);
       var someW = node.firstWhere((attr) => attr.name.local == "width",
-          orElse: () => null);
+          orElse: () => XmlAttribute(
+              XmlName(''),
+              ''
+          ));
       width = double.tryParse(someW.value);
-      var someViewBox = node.firstWhere((attr) => (attr.name.local == "viewbox" || attr.name.local == "viewBox"),
-          orElse: () => null);
+      var someViewBox = node.firstWhere(
+          (attr) =>
+              (attr.name.local == "viewbox" || attr.name.local == "viewBox"),
+          orElse: () => XmlAttribute(
+              XmlName(''),
+              ''
+          ));
       viewbox = someViewBox.value;
     });
 
@@ -89,56 +119,72 @@ class SvgParser {
         .forEach((attributes) {
       // print('attributes[0].name.local: ${attributes[0].name.local}');
       var dPath = attributes.firstWhere((attr) => attr.name.local == "d",
-          orElse: () => null);
+          orElse: () => XmlAttribute(
+              XmlName(''),
+            ''
+          ));
       if (dPath != null) {
         Path path = Path();
         writeSvgPathDataToPath(dPath.value, PathModifier(path));
 
-        Color color;
-        double strokeWidth;
+        Color color=Colors.black;
+        double strokeWidth = 1.0;
 
         //Attributes - [1] css-styling
         var style = attributes.firstWhere((attr) => attr.name.local == "style",
-            orElse: () => null);
+            orElse: () => XmlAttribute(
+                XmlName(''),
+                ''
+            ));
         if (style != null) {
           //Parse color of stroke
           RegExp exp = RegExp(r"stroke:([^;]+);");
-          Match match = exp.firstMatch(style.value);
+          Match? match = exp.firstMatch(style.value);
           if (match != null) {
-            String cStr = match.group(1);
-            color = parseColor(cStr);
+            String? cStr = match.group(1);
+            color = parseColor(cStr ?? '000000');
           }
           //Parse stroke-width
           exp = RegExp(r"stroke-width:([0-9.]+)");
           match = exp.firstMatch(style.value);
           if (match != null) {
-            String cStr = match.group(1);
-            strokeWidth = double.tryParse(cStr);
+            String? cStr = match.group(1);
+            strokeWidth = double.tryParse(cStr  ?? '1.0') ?? 1;
           }
         }
 
         //Attributes - [2] svg-attributes
         var strokeElement = attributes.firstWhere(
             (attr) => attr.name.local == "stroke",
-            orElse: () => null);
+            orElse: () => XmlAttribute(
+                XmlName(''),
+                ''
+            ));
         if (strokeElement != null) {
           color = parseColor(strokeElement.value);
         }
 
         var strokeWidthElement = attributes.firstWhere(
             (attr) => attr.name.local == "stroke-width",
-            orElse: () => null);
+            orElse: () => XmlAttribute(
+                XmlName(''),
+                ''
+            ));
         if (strokeWidthElement != null) {
-          strokeWidth = double.tryParse(strokeWidthElement.value);
+          strokeWidth = double.tryParse(strokeWidthElement.value) ?? 1;
         }
-        var pathIdElement = attributes.firstWhere((attr) => attr.name.local == "class",
-            orElse: () => null);
-        var pathId='$index';
-        if(pathIdElement != null){
-          pathId =pathIdElement.value;
+        var pathIdElement = attributes.firstWhere(
+            (attr) => attr.name.local == "class",
+            orElse: () => XmlAttribute(
+                XmlName(''),
+                ''
+            ));
+        var pathId = '$index';
+        if (pathIdElement != null) {
+          pathId = pathIdElement.value;
         }
         _paths.add(path);
-        addPathSegments(path, index, strokeWidth, color,pathId);
+        addPathSegments(path, index, strokeWidth, color, pathId);
         index++;
       }
     });
@@ -151,7 +197,7 @@ class SvgParser {
     int index = 0;
     for (var p in paths) {
       assert(p != null, "Path element in `paths` must not be null.");
-      addPathSegments(p, index, null, null,"$index");
+      addPathSegments(p, index, null, null, "$index");
       index++;
     }
   }
@@ -167,19 +213,6 @@ class SvgParser {
   List<PathSegment> getPathSegments() {
     return _pathSegments;
   }
-
-  PathSegment getSegmentOfPath(Path currentPath) {
-
-    PathSegment segment;
-    var pathsSegment = getPathSegments();
-    for(var item in pathsSegment){
-      if(item.path == currentPath){
-        segment=item;
-        break;
-      }
-    }
-    return segment;
-  }
   /// Returns extracted [Path] elements of parsed Svg
   List<Path> getPaths() {
     return _paths;
@@ -194,19 +227,15 @@ class PathSegment {
         firstSegmentOfPathIndex = 0,
         relativeIndex = 0,
         pathIndex = 0 {
-    //That is fun.
-    // List colors = [Colors.red, Colors.green, Colors.yellow];
-    // Random random = new Random();
-    // color = colors[random.nextInt(3)];
   }
 
   /// A continuous path/segment
-  Path path;
+  Path? path;
   double strokeWidth;
   Color color;
 
   /// Length of the segment path
-  double length;
+  double length=0;
 
   /// Denotes the index of the first segment of the containing path when PathOrder.original
   int firstSegmentOfPathIndex;

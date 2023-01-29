@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:touchable/touchable.dart';
 
+import '../SelectedPathModel.dart';
 import '../parser/parser.dart';
 
 class PathPainter2 extends CustomPainter {
   final BuildContext context;
   final List<PathSegment> paths;
-  final PathSegment curPath;
+  final List<SelectedPathModel> curPath;
   final double height;
   final double width;
   final Function(PathSegment curPath) onPressed;
   PathPainter2(
-      {this.context,
-      this.paths,
-      this.curPath,
-      this.onPressed,
-      this.height,
-      this.width});
+      {required this.context,
+      required this.paths,
+  required this.curPath,
+      required this.onPressed,
+      required this.height,
+      required this.width});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -46,15 +47,21 @@ class PathPainter2 extends CustomPainter {
     for (var path in paths) {
       // Here: archive our target, select one path/state, just change the paint's style to fill
 
-      paint.style = path == curPath ? PaintingStyle.fill : PaintingStyle.stroke;
-      touchCanvas.drawPath(
-        path.path.transform(matrix4.storage).shift(Offset(offsetX, offsetY)),
-        paint,
-        onTapDown: (details) {
-          // notify select change and redraw
-          onPressed(path);
-        },
-      );
+      var selectedCurPath=curPath.where((element) => (element.pathName == path.pathId)).toList();
+      var selectedPathModel=(selectedCurPath.isNotEmpty) ? selectedCurPath.first:null;
+      paint.style = (selectedPathModel != null) ? PaintingStyle.fill : PaintingStyle.stroke;
+      paint.color =selectedPathModel?.pathColor ?? Colors.blueAccent;
+      if(path.path != null){
+        touchCanvas.drawPath(
+          path.path!.transform(matrix4.storage).shift(Offset(offsetX, offsetY)),
+          paint,
+          onTapDown: (details) {
+            // notify select change and redraw
+            onPressed(path);
+          },
+        );
+      }
+
     }
   }
 

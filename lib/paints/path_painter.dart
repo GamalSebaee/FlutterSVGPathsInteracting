@@ -4,17 +4,17 @@ import 'package:touchable/touchable.dart';
 class PathPainter extends CustomPainter {
   final BuildContext context;
   final List<Path> paths;
-  final Path curPath;
+  final Path? curPath;
   final double height;
   final double width;
   final Function(Path curPath) onPressed;
   PathPainter(
-      {this.context,
-      this.paths,
+      {required this.context,
+      required this.paths,
       this.curPath,
-      this.onPressed,
-      this.height,
-      this.width});
+      required this.onPressed,
+      required this.height,
+      required this.width});
 
   @override
   void paint(Canvas canvas, Size size) {
