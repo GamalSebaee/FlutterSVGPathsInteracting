@@ -1,4 +1,4 @@
-# click
+# FlutterSVGPathsInteracting
 
 Interacting with svg in flutter
 
