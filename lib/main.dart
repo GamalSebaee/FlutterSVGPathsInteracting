@@ -1,5 +1,5 @@
-import 'package:click/parser/parser.dart';
 import 'package:flutter/material.dart';
+import 'package:pathsInteracting/parser/parser.dart';
 import 'package:touchable/touchable.dart';
 import 'SelectedPathModel.dart';
 import 'paints/path_painter2.dart';
@@ -36,16 +36,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final svgPath = "images/item.svg";
   List<Path> paths = [];
   List<PathSegment> pathsSegment = [];
-  List<SelectedPathModel> _selectedPaths=[
-    SelectedPathModel(
-      pathName:'tooth-37-parent',
-      pathColor: Colors.red
-    ), SelectedPathModel(
-      pathName:'tooth-47-parent',
-        pathColor: Colors.yellow
-    )
-
-  ];
+  List<SelectedPathModel> _selectedPaths=[];
   double? heightSvg;
   double? widthSvg;
   SvgParser parser = SvgParser();
@@ -80,7 +71,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     print("itemSegment ${curPath.pathId}");
                     setState(() {
                       _selectedPaths.add(SelectedPathModel(pathName: curPath.pathId,
-                      pathColor: Colors.blue));
+                      pathColor:getColor(curPath.pathId)  ?? Colors.blue));
                     });
                   },
                   height: 700,
@@ -103,5 +94,25 @@ class _MyHomePageState extends State<MyHomePage> {
         widthSvg = parser.svgWidth;
       });
     });
+  }
+
+  Color? getColor(String? pathName){
+    switch(pathName){
+      case 'tooth-35-parent':
+        return Colors.yellow;
+      case 'tooth-36-parent':
+        return Colors.red;
+      case 'tooth-37-parent':
+        return Colors.green;
+      case 'tooth-38-parent':
+        return Colors.black;
+      case 'tooth-33-parent':
+        return Colors.orange;
+      case 'tooth-32-parent':
+        return Colors.deepPurple;
+      case 'tooth-34-parent':
+        return Colors.teal;
+    }
+    return null;
   }
 }
